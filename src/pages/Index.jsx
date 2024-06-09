@@ -16,7 +16,13 @@ const Index = () => {
     try {
       const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
       const data = await response.json();
-      setContent(data.contents);
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(data.contents, "text/html");
+
+      const title = doc.querySelector("#firstHeading")?.innerText || "No title found";
+      const paragraphs = Array.from(doc.querySelectorAll("#mw-content-text p")).map(p => p.innerText).join("\n\n");
+
+      setContent({ title, paragraphs });
     } catch (err) {
       setError("Failed to fetch content. Please try again.");
     } finally {
@@ -47,7 +53,8 @@ const Index = () => {
         {error && <Text color="red.500">{error}</Text>}
         {content && (
           <Box p={4} borderWidth="1px" borderRadius="lg" width="100%" overflow="auto" maxHeight="400px">
-            <Text whiteSpace="pre-wrap">{content}</Text>
+            <Text fontSize="xl" fontWeight="bold">{content.title}</Text>
+            <Text whiteSpace="pre-wrap">{content.paragraphs}</Text>
           </Box>
         )}
       </VStack>
